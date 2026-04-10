@@ -158,49 +158,38 @@
   <div class="info-card">
     <h3>Development Process</h3>
     <p>
-      <strong>Team &amp; time.</strong> This was a two-person submission. We began with a shared
-      data-cleaning phase (approximately 1.5 person-hours each), parsing the OECD CSV, filtering
-      out regional aggregates, and identifying countries with sufficient year coverage. After that,
-      we divided the core work: one person took ownership of the white-hat visualization and its
-      write-up, while the other handled the black-hat visualization and write-up. Total development
-      time was approximately 8 person-hours across both teammates.
+      <strong>Team &amp; time.</strong> This was a two-person submission by
+      <strong>Raghav Chakravarthy</strong> and <strong>Dheer Guda</strong>. We began with a shared
+      data-cleaning phase (approximately 1.5 person-hours each): parsing the OECD CSV in
+      <code>data/</code>, filtering out regional aggregates, and choosing countries with enough
+      continuous years for fair comparison. Total development time was roughly 8 person-hours
+      across both teammates, including review and iteration.
     </p>
     <p>
-      <strong>What took the most time.</strong> The white-hat cumulative bar chart required
-      careful thought about how to frame the "advanced transformation" so it added genuine insight
-      (not just decoration). Deciding on the exact black-hat techniques, specifically which
-      time window and country subset produced the subtlest yet most effective distortion,
-      also required multiple iterations. The D3 responsive layout across the two panels
-      took longer than expected due to SVG sizing and label collision issues.
+      <strong>Dheer Guda</strong> led the <em>white-hat</em> work: the multi-country
+      line chart (2014–2023, y-axis from zero, COVID band), the cumulative per-capita horizontal
+      bar chart and its derived totals, and the <em>Design Rationale</em> write-up (subset choice,
+      cumulative transformation,       encodings, and source transparency), and helped integrate
+      layout and styling with the shared CSS structure.
     </p>
     <p>
-      <strong>Tooling.</strong> D3.js v7 for visualization; standard HTML/CSS for layout;
-      Python for initial data exploration; Claude AI for iterative code review.
+      <strong>Raghav Chakravarthy</strong> led the <em>black-hat</em> work: the paired 2019 vs. 2023
+      horizontal bar chart (including the truncated x-axis, endpoint selection, and reduction
+      badges), the <em>Deceptive Techniques (Exposed)</em> write-up that names each technique,
+      and fixed D3/SVG spacing so axis ticks, legend, and labels did not overlap.
     </p>
-  </div>
-
-  <!-- REFERENCES -->
-  <div class="info-card">
-    <h3>References</h3>
-    <ul>
-      <li>
-        OECD (2024). <em>Air emissions — Greenhouse gas emissions inventories.</em>
-        OECD.Stat. Dataset ID: DSD_AIR_GHG@DF_AIR_GHG.
-        <a href="https://stats.oecd.org/" target="_blank" rel="noopener">https://stats.oecd.org/</a>
-      </li>
-      <li>
-        Bostock, M. et al. <em>D3.js — Data-Driven Documents.</em> v7.
-        <a href="https://d3js.org" target="_blank" rel="noopener">https://d3js.org</a>
-      </li>
-      <li>
-        Cairo, A. (2019). <em>How Charts Lie: Getting Smarter about Visual Information.</em>
-        W. W. Norton &amp; Company.
-      </li>
-      <li>
-        Tufte, E. R. (2001). <em>The Visual Display of Quantitative Information.</em> (2nd ed.)
-        Graphics Press.
-      </li>
-    </ul>
+    <p>
+      <strong>What took the most time.</strong> The white-hat cumulative bar required the most
+      conceptual effort—making the decade sum add real insight rather than decoration. The
+      black-hat side needed several passes to tune which countries and years produced a
+      distortion that was subtle but still teachable. Shared layout polish (two-panel white-hat
+      row plus full-width black-hat card) took longer than expected.
+    </p>
+    <p>
+      <strong>Tooling.</strong> D3.js v7 for visualization; HTML/CSS in <code>css/styles.css</code>;
+      JavaScript in <code>js/charts.js</code>; Python for early data exploration; Claude (Anthropic)
+      for parsing help and draft chart scaffolding as noted above.
+    </p>
   </div>
 
 </div><!-- .container -->
