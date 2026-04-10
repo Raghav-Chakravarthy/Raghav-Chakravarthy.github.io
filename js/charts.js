@@ -74,6 +74,12 @@ const BLACK_HAT = [
 const fmtKg = (x) => d3.format(",.0f")(x);
 const fmtKgAxis = (x) => d3.format(".2s")(x);
 
+/** Shorter end-of-line labels where needed (tooltips still use full name). */
+const WH_LINE_LABEL = {
+  "United Kingdom": "UK",
+  "United States": "USA"
+};
+
 // ─────────────────────── TOOLTIP ───────────────────────
 const tip = document.getElementById("tooltip");
 function showTip(evt, html) {
@@ -89,7 +95,7 @@ function hideTip() { tip.style.opacity = 0; }
 
 // ─────────────────────── WHITE HAT — LINE CHART ───────────────────────
 (function drawWhiteHatLine() {
-  const ml=60, mr=115, mt=60, mb=50;
+  const ml=60, mr=138, mt=60, mb=50;
   const W = 660, H = 420;
   const w = W - ml - mr, h = H - mt - mb;
 
@@ -147,6 +153,7 @@ function hideTip() { tip.style.opacity = 0; }
 
   // Line + dots
   const lineGen = d3.line().x(d=>xSc(d.y)).y(d=>ySc(d.v)).curve(d3.curveMonotoneX);
+  const xLabelCol = xSc(2023) + 6;
 
   WHITE_HAT.forEach(ctry => {
     g.append("path")
@@ -155,8 +162,9 @@ function hideTip() { tip.style.opacity = 0; }
       .attr("stroke",ctry.color)
       .attr("stroke-width",2.2)
       .attr("d",lineGen);
+  });
 
-    // Dots (for hover)
+  WHITE_HAT.forEach(ctry => {
     g.selectAll(null).data(ctry.v).enter()
       .append("circle")
       .attr("cx",d=>xSc(d.y)).attr("cy",d=>ySc(d.v))
@@ -167,14 +175,35 @@ function hideTip() { tip.style.opacity = 0; }
         `<strong>${ctry.name}</strong><br>${d.y}: ${fmtKg(d.v)} kg CO₂e/person`))
       .on("mousemove",moveTip)
       .on("mouseout",hideTip);
+  });
 
-    // End-of-line label
-    const last = ctry.v[ctry.v.length-1];
+  // End labels last (on top); nudge vertically when endpoints are too close (e.g. UK vs France)
+  const labelMinPx = 13;
+  const labelMeta = WHITE_HAT.map(ctry => {
+    const last = ctry.v[ctry.v.length - 1];
+    return {
+      ctry,
+      y0: ySc(last.v),
+      text: WH_LINE_LABEL[ctry.name] || ctry.name
+    };
+  }).sort((a, b) => a.y0 - b.y0);
+
+  let prevBottom = -1e9;
+  labelMeta.forEach(item => {
+    let y = Math.max(item.y0, prevBottom + labelMinPx);
+    prevBottom = y;
     g.append("text")
-      .attr("x",xSc(last.y)+5).attr("y",ySc(last.v))
-      .attr("dy","0.35em")
-      .style("font-size","11px").style("fill",ctry.color).style("font-weight","600")
-      .text(ctry.name);
+      .attr("x", xLabelCol)
+      .attr("y", y)
+      .attr("dy", "0.35em")
+      .style("font-size", "11px")
+      .style("fill", item.ctry.color)
+      .style("font-weight", "600")
+      .style("paint-order", "stroke fill")
+      .style("stroke", "#fff")
+      .style("stroke-width", "3px")
+      .style("stroke-linejoin", "round")
+      .text(item.text);
   });
 
   // Chart title
