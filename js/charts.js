@@ -80,6 +80,117 @@ const WH_LINE_LABEL = {
   "United States": "USA"
 };
 
+/** % change from 2014 baseline to last available year (derived metric for linked views). */
+function pctChange2014ToLatest(ctry) {
+  const v0 = ctry.v.find((p) => p.y === 2014);
+  const last = ctry.v[ctry.v.length - 1];
+  if (!v0 || last.v == null || v0.v === 0) return null;
+  return ((last.v - v0.v) / v0.v) * 100;
+}
+
+/** Linked white-hat focus: null = show all. */
+let whFocusCountry = null;
+
+function toggleWhiteHatFocus(name) {
+  whFocusCountry = whFocusCountry === name ? null : name;
+  applyWhiteHatFocus();
+}
+
+function applyWhiteHatFocus() {
+  const dur = 220;
+  const focus = whFocusCountry;
+  const lineRoot = d3.select("#wh-line");
+  const barRoot = d3.select("#wh-bar");
+  const panel = document.getElementById("wh-focus-panel");
+  const clearBtn = document.getElementById("wh-focus-clear");
+
+  const match = (country) => !focus || country === focus;
+
+  lineRoot.selectAll(".wh-line-path")
+    .transition().duration(dur)
+    .style("opacity", function () {
+      return match(this.getAttribute("data-country")) ? 1 : 0.14;
+    })
+    .attr("stroke-width", function () {
+      return match(this.getAttribute("data-country")) ? 2.6 : 1.6;
+    });
+
+  lineRoot.selectAll(".wh-line-dot")
+    .transition().duration(dur)
+    .style("opacity", function () {
+      return match(this.getAttribute("data-country")) ? 1 : 0.2;
+    })
+    .attr("r", function () {
+      return match(this.getAttribute("data-country")) ? 4.5 : 3;
+    });
+
+  lineRoot.selectAll(".wh-end-label")
+    .transition().duration(dur)
+    .style("opacity", function () {
+      return match(this.getAttribute("data-country")) ? 1 : 0.22;
+    });
+
+  barRoot.selectAll(".wh-bar-row rect")
+    .transition().duration(dur)
+    .style("opacity", function () {
+      const c = d3.select(this.parentNode).datum().name;
+      if (!focus) return 0.82;
+      return c === focus ? 1 : 0.28;
+    })
+    .attr("stroke", function () {
+      const c = d3.select(this.parentNode).datum().name;
+      return focus && c === focus ? "#1e3a5f" : "none";
+    })
+    .attr("stroke-width", function () {
+      const c = d3.select(this.parentNode).datum().name;
+      return focus && c === focus ? 2 : 0;
+    });
+
+  barRoot.selectAll(".wh-bar-row .wh-bar-vlbl")
+    .transition().duration(dur)
+    .style("opacity", function () {
+      const c = d3.select(this.parentNode).datum().name;
+      return match(c) ? 1 : 0.3;
+    });
+
+  barRoot.selectAll(".wh-bar-axis-y .tick text")
+    .transition().duration(dur)
+    .style("opacity", function () {
+      const c = this.getAttribute("data-country");
+      if (!focus) return 1;
+      return c === focus ? 1 : 0.28;
+    })
+    .style("font-weight", function () {
+      const c = this.getAttribute("data-country");
+      if (!focus) return "500";
+      return c === focus ? "700" : "500";
+    });
+
+  if (panel) {
+    if (!focus) {
+      panel.innerHTML = "";
+      panel.hidden = true;
+    } else {
+      const ctry = WHITE_HAT.find((c) => c.name === focus);
+      const pct = ctry ? pctChange2014ToLatest(ctry) : null;
+      const last = ctry ? ctry.v[ctry.v.length - 1] : null;
+      const lastY = last ? last.y : "";
+      const pctStr =
+        pct == null
+          ? "n/a"
+          : `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
+      const dir =
+        pct == null ? "" : pct <= 0 ? " (lower per-capita GHG than in 2014)" : " (higher than in 2014)";
+      panel.innerHTML =
+        `<strong>${focus}</strong> — Change from <strong>2014</strong> to <strong>${lastY}</strong>: ` +
+        `<strong>${pctStr}</strong>${dir}. ` +
+        `Cumulative decade total remains in the bar chart.`;
+      panel.hidden = false;
+    }
+  }
+  if (clearBtn) clearBtn.hidden = !focus;
+}
+
 // ─────────────────────── TOOLTIP ───────────────────────
 const tip = document.getElementById("tooltip");
 function showTip(evt, html) {
@@ -158,15 +269,21 @@ function hideTip() { tip.style.opacity = 0; }
   WHITE_HAT.forEach(ctry => {
     g.append("path")
       .datum(ctry.v)
+      .attr("class", "wh-line-path")
+      .attr("data-country", ctry.name)
       .attr("fill","none")
       .attr("stroke",ctry.color)
       .attr("stroke-width",2.2)
-      .attr("d",lineGen);
+      .attr("d",lineGen)
+      .style("cursor", "pointer")
+      .on("click", (e) => { e.stopPropagation(); toggleWhiteHatFocus(ctry.name); });
   });
 
   WHITE_HAT.forEach(ctry => {
     g.selectAll(null).data(ctry.v).enter()
       .append("circle")
+      .attr("class", "wh-line-dot")
+      .attr("data-country", ctry.name)
       .attr("cx",d=>xSc(d.y)).attr("cy",d=>ySc(d.v))
       .attr("r",4)
       .attr("fill",ctry.color).attr("stroke","#fff").attr("stroke-width",1.2)
@@ -174,7 +291,8 @@ function hideTip() { tip.style.opacity = 0; }
       .on("mouseover",(evt,d)=>showTip(evt,
         `<strong>${ctry.name}</strong><br>${d.y}: ${fmtKg(d.v)} kg CO₂e/person`))
       .on("mousemove",moveTip)
-      .on("mouseout",hideTip);
+      .on("mouseout",hideTip)
+      .on("click", (e) => { e.stopPropagation(); toggleWhiteHatFocus(ctry.name); });
   });
 
   // End labels last (on top); nudge vertically when endpoints are too close (e.g. UK vs France)
@@ -193,6 +311,8 @@ function hideTip() { tip.style.opacity = 0; }
     let y = Math.max(item.y0, prevBottom + labelMinPx);
     prevBottom = y;
     g.append("text")
+      .attr("class", "wh-end-label")
+      .attr("data-country", item.ctry.name)
       .attr("x", xLabelCol)
       .attr("y", y)
       .attr("dy", "0.35em")
@@ -203,6 +323,8 @@ function hideTip() { tip.style.opacity = 0; }
       .style("stroke", "#fff")
       .style("stroke-width", "3px")
       .style("stroke-linejoin", "round")
+      .style("cursor", "pointer")
+      .on("click", (e) => { e.stopPropagation(); toggleWhiteHatFocus(item.ctry.name); })
       .text(item.text);
   });
 
@@ -247,32 +369,42 @@ function hideTip() { tip.style.opacity = 0; }
     .call(gg=>gg.select(".domain").style("stroke","#ccc"))
     .call(gg=>gg.selectAll("text").style("font-size","10px"));
 
-  // Left y-axis
-  g.append("g").call(d3.axisLeft(ySc))
+  // Left y-axis (class for linked-view dimming)
+  const yAxisG = g.append("g").attr("class", "wh-bar-axis-y").call(d3.axisLeft(ySc))
     .call(gg=>gg.select(".domain").style("stroke","#ccc"))
     .call(gg=>gg.selectAll("text").style("font-size","11px").style("fill",(_,i)=>data[i].color));
+  yAxisG.selectAll(".tick").each(function (d) {
+    d3.select(this).select("text").attr("data-country", d);
+  });
 
-  // Bars
-  g.selectAll(".bar").data(data).enter()
-    .append("rect")
-    .attr("y",d=>ySc(d.name))
-    .attr("width",d=>xSc(d.cum))
-    .attr("height",ySc.bandwidth())
-    .attr("fill",d=>d.color).attr("opacity",0.82)
-    .style("cursor","pointer")
+  // Bars + value labels in clickable rows (linked views / extra credit)
+  const barRows = g.selectAll("g.wh-bar-row").data(data).enter()
+    .append("g")
+    .attr("class", "wh-bar-row")
+    .style("cursor", "pointer")
+    .on("click", (e, d) => { e.stopPropagation(); toggleWhiteHatFocus(d.name); });
+
+  barRows.append("rect")
+    .attr("y", d => ySc(d.name))
+    .attr("width", d => xSc(d.cum))
+    .attr("height", ySc.bandwidth())
+    .attr("fill", d => d.color)
+    .attr("opacity", 0.82)
     .on("mouseover",(evt,d)=>showTip(evt,
       `<strong>${d.name}</strong><br>Cumulative: ${fmtKg(d.cum)} kg CO₂e/person<br>(${d.yrs} years)` +
       (d.yrs<10 ? "<br><em>*data through 2022</em>":"")))
-    .on("mousemove",moveTip)
-    .on("mouseout",hideTip);
+    .on("mousemove", moveTip)
+    .on("mouseout", hideTip);
 
-  // Value labels
-  g.selectAll(".vlbl").data(data).enter()
-    .append("text")
-    .attr("x",d=>xSc(d.cum)+3).attr("y",d=>ySc(d.name)+ySc.bandwidth()/2)
-    .attr("dy","0.35em")
-    .style("font-size","10px").style("fill","#444")
-    .text(d=>fmtKgAxis(d.cum)+(d.yrs<10?"*":""));
+  barRows.append("text")
+    .attr("class", "wh-bar-vlbl")
+    .attr("x", d => xSc(d.cum) + 3)
+    .attr("y", d => ySc(d.name) + ySc.bandwidth() / 2)
+    .attr("dy", "0.35em")
+    .style("font-size", "10px")
+    .style("fill", "#444")
+    .style("pointer-events", "none")
+    .text(d => fmtKgAxis(d.cum) + (d.yrs < 10 ? "*" : ""));
 
   // Titles
   svg.append("text").attr("x",ml+w/2).attr("y",14)
@@ -288,6 +420,11 @@ function hideTip() { tip.style.opacity = 0; }
     .attr("text-anchor","middle")
     .style("font-size","9.5px").style("fill","#999")
     .text("kg CO₂e per person (cumulative)");
+
+  document.getElementById("wh-focus-clear")?.addEventListener("click", () => {
+    whFocusCountry = null;
+    applyWhiteHatFocus();
+  });
 })();
 
 // ─────────────────────── BLACK HAT CHART (paired grouped horizontal bar) ───────────────────────
