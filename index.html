@@ -640,8 +640,8 @@ function hideTip() { tip.style.opacity = 0; }
   // Precompute true % reductions (used in badges — accurate numbers, exaggerated visuals)
   rows.forEach(d => { d.pct = Math.round((d.v19 - d.v23) / d.v19 * 100); });
 
-  const ml=115, mr=84, mt=80, mb=52;
-  const W = 760, H = 460;
+  const ml=115, mr=84, mt=80, mb=78;
+  const W = 760, H = 498;
   const w = W-ml-mr, h = H-mt-mb;
 
   const svg = d3.select("#bh-chart").attr("width",W).attr("height",H);
@@ -667,9 +667,9 @@ function hideTip() { tip.style.opacity = 0; }
     .call(gg=>gg.selectAll("line").style("stroke","#e0f2e3").style("stroke-dasharray","3,3"))
     .call(gg=>gg.select(".domain").remove());
 
-  // X axis at bottom
+  // X axis at bottom (extra tick padding keeps numeric labels clear of the legend row)
   g.append("g").attr("transform",`translate(0,${h})`)
-    .call(d3.axisBottom(xSc).ticks(6))
+    .call(d3.axisBottom(xSc).ticks(6).tickPadding(10))
     .call(gg=>gg.select(".domain").style("stroke","#bbb"))
     .call(gg=>gg.selectAll("text").style("font-size","11px"));
 
@@ -679,8 +679,8 @@ function hideTip() { tip.style.opacity = 0; }
     .call(gg=>gg.select(".domain").style("stroke","#bbb"))
     .call(gg=>gg.selectAll("text").style("font-size","12px").style("font-weight","500"));
 
-  // X axis label
-  g.append("text").attr("x",w/2).attr("y",h+40)
+  // X axis title — below tick labels, with legend row between ticks and title
+  g.append("text").attr("x",w/2).attr("y",h+68)
     .attr("text-anchor","middle")
     .style("font-size","11px").style("fill","#555")
     .text("Tonnes CO₂-equivalent per person");
@@ -732,16 +732,21 @@ function hideTip() { tip.style.opacity = 0; }
       .text(`↓ ${d.pct}%`);
   });
 
-  // Legend
-  const legX = w/2 - 55, legY = h + 24;
-  g.append("rect").attr("x",legX).attr("y",legY).attr("width",12).attr("height",12)
+  // Legend (single row, side-by-side under tick labels — avoids center clash with axis title)
+  const legY = h + 30;
+  const legLeft = 0;
+  const legGap = 24;
+  g.append("rect").attr("x",legLeft).attr("y",legY).attr("width",12).attr("height",12)
     .attr("fill","#5a82a6").attr("opacity",0.72);
-  g.append("text").attr("x",legX+15).attr("y",legY+10)
-    .style("font-size","11px").style("fill","#444").text("2019 (pre-pandemic baseline)");
-  g.append("rect").attr("x",legX+170).attr("y",legY).attr("width",12).attr("height",12)
+  g.append("text").attr("x",legLeft+18).attr("y",legY+10)
+    .attr("text-anchor","start")
+    .style("font-size","10.5px").style("fill","#444").text("2019 (pre-pandemic baseline)");
+  const leg2019W = 168;
+  g.append("rect").attr("x",legLeft+leg2019W+legGap).attr("y",legY).attr("width",12).attr("height",12)
     .attr("fill","#1e7a31").attr("opacity",0.88);
-  g.append("text").attr("x",legX+185).attr("y",legY+10)
-    .style("font-size","11px").style("fill","#444").text("2023");
+  g.append("text").attr("x",legLeft+leg2019W+legGap+18).attr("y",legY+10)
+    .attr("text-anchor","start")
+    .style("font-size","10.5px").style("fill","#444").text("2023");
 
   // *** BLACK HAT: misleading title + "pre-pandemic baseline" framing
   svg.append("text").attr("x",ml+w/2).attr("y",22)
