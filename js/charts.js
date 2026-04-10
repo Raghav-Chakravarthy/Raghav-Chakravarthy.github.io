@@ -64,6 +64,16 @@ const BLACK_HAT = [
   }
 ];
 
+// OECD CSV: UNIT_MEASURE KG_CO2E_PS, UNIT_MULT = 3 (Thousands) ⇒ OBS_VALUE × 10³ = kg CO₂e per person
+(() => {
+  const k = 1000;
+  for (const c of WHITE_HAT) for (const p of c.v) p.v *= k;
+  for (const c of BLACK_HAT) for (const p of c.v) p.v *= k;
+})();
+
+const fmtKg = (x) => d3.format(",.0f")(x);
+const fmtKgAxis = (x) => d3.format(".2s")(x);
+
 // ─────────────────────── TOOLTIP ───────────────────────
 const tip = document.getElementById("tooltip");
 function showTip(evt, html) {
@@ -89,7 +99,7 @@ function hideTip() { tip.style.opacity = 0; }
   const g = svg.append("g").attr("transform",`translate(${ml},${mt})`);
 
   const xSc = d3.scaleLinear().domain([2014,2023]).range([0,w]);
-  const ySc = d3.scaleLinear().domain([0,25]).range([h,0]);
+  const ySc = d3.scaleLinear().domain([0,25000]).range([h,0]);
 
   // Gridlines
   g.append("g").attr("class","grid")
@@ -105,7 +115,7 @@ function hideTip() { tip.style.opacity = 0; }
 
   // Y axis
   g.append("g")
-    .call(d3.axisLeft(ySc).ticks(6))
+    .call(d3.axisLeft(ySc).ticks(6).tickFormat(fmtKgAxis))
     .call(gg => gg.select(".domain").style("stroke","#ccc"))
     .call(gg => gg.selectAll("text").style("font-size","11px"));
 
@@ -115,7 +125,7 @@ function hideTip() { tip.style.opacity = 0; }
     .attr("y",-48).attr("x",-h/2)
     .attr("text-anchor","middle")
     .style("font-size","11px").style("fill","#666")
-    .text("Tonnes CO₂-equivalent per person");
+    .text("kg CO₂-equivalent per person");
 
   // X label
   g.append("text")
@@ -154,7 +164,7 @@ function hideTip() { tip.style.opacity = 0; }
       .attr("fill",ctry.color).attr("stroke","#fff").attr("stroke-width",1.2)
       .style("cursor","pointer")
       .on("mouseover",(evt,d)=>showTip(evt,
-        `<strong>${ctry.name}</strong><br>${d.y}: ${d.v.toFixed(2)} t CO₂e/person`))
+        `<strong>${ctry.name}</strong><br>${d.y}: ${fmtKg(d.v)} kg CO₂e/person`))
       .on("mousemove",moveTip)
       .on("mouseout",hideTip);
 
@@ -194,7 +204,7 @@ function hideTip() { tip.style.opacity = 0; }
   const svg = d3.select("#wh-bar").attr("width",W).attr("height",H);
   const g = svg.append("g").attr("transform",`translate(${ml},${mt})`);
 
-  const xSc = d3.scaleLinear().domain([0,230]).range([0,w]);
+  const xSc = d3.scaleLinear().domain([0,230000]).range([0,w]);
   const ySc = d3.scaleBand().domain(data.map(d=>d.name)).range([0,h]).padding(0.28);
 
   // Grid
@@ -204,7 +214,7 @@ function hideTip() { tip.style.opacity = 0; }
     .call(gg=>gg.select(".domain").remove());
 
   // Top x-axis
-  g.append("g").call(d3.axisTop(xSc).ticks(4))
+  g.append("g").call(d3.axisTop(xSc).ticks(4).tickFormat(fmtKgAxis))
     .call(gg=>gg.select(".domain").style("stroke","#ccc"))
     .call(gg=>gg.selectAll("text").style("font-size","10px"));
 
@@ -222,7 +232,7 @@ function hideTip() { tip.style.opacity = 0; }
     .attr("fill",d=>d.color).attr("opacity",0.82)
     .style("cursor","pointer")
     .on("mouseover",(evt,d)=>showTip(evt,
-      `<strong>${d.name}</strong><br>Cumulative: ${d.cum.toFixed(1)} t CO₂e/person<br>(${d.yrs} years)` +
+      `<strong>${d.name}</strong><br>Cumulative: ${fmtKg(d.cum)} kg CO₂e/person<br>(${d.yrs} years)` +
       (d.yrs<10 ? "<br><em>*data through 2022</em>":"")))
     .on("mousemove",moveTip)
     .on("mouseout",hideTip);
@@ -233,7 +243,7 @@ function hideTip() { tip.style.opacity = 0; }
     .attr("x",d=>xSc(d.cum)+3).attr("y",d=>ySc(d.name)+ySc.bandwidth()/2)
     .attr("dy","0.35em")
     .style("font-size","10px").style("fill","#444")
-    .text(d=>d.cum.toFixed(0)+(d.yrs<10?"*":""));
+    .text(d=>fmtKgAxis(d.cum)+(d.yrs<10?"*":""));
 
   // Titles
   svg.append("text").attr("x",ml+w/2).attr("y",14)
@@ -243,25 +253,22 @@ function hideTip() { tip.style.opacity = 0; }
   svg.append("text").attr("x",ml+w/2).attr("y",28)
     .attr("text-anchor","middle")
     .style("font-size","9.5px").style("fill","#999")
-    .text("Sum 2014–2023 (t CO₂e/person) · *US thru 2022");
+    .text("Sum 2014–2023 (kg CO₂e/person) · *US thru 2022");
   // X label
   svg.append("text").attr("x",ml+w/2).attr("y",H-6)
     .attr("text-anchor","middle")
     .style("font-size","9.5px").style("fill","#999")
-    .text("Tonnes CO₂e per person (cumulative)");
+    .text("kg CO₂e per person (cumulative)");
 })();
 
 // ─────────────────────── BLACK HAT CHART (paired grouped horizontal bar) ───────────────────────
 (function drawBlackHat() {
-  // Only 2019 and 2023 endpoints — hides the volatile COVID middle years
-  const rows = [
-    { name:"Luxembourg",  v19:17.338, v23:11.681 },
-    { name:"Estonia",     v19:10.938, v23:7.945  },
-    { name:"Netherlands", v19:10.327, v23:7.860  },
-    { name:"Germany",     v19:9.551,  v23:7.948  },
-    { name:"Austria",     v19:9.080,  v23:7.524  },
-    { name:"Denmark",     v19:7.871,  v23:6.558  },
-  ];
+  // Only 2019 and 2023 endpoints — hides the volatile COVID middle years (values already in kg)
+  const rows = BLACK_HAT.map(c => ({
+    name: c.name,
+    v19: c.v.find(p => p.y === 2019).v,
+    v23: c.v.find(p => p.y === 2023).v
+  }));
   // Precompute true % reductions (used in badges — accurate numbers, exaggerated visuals)
   rows.forEach(d => { d.pct = Math.round((d.v19 - d.v23) / d.v19 * 100); });
 
@@ -272,10 +279,10 @@ function hideTip() { tip.style.opacity = 0; }
   const svg = d3.select("#bh-chart").attr("width",W).attr("height",H);
   const g = svg.append("g").attr("transform",`translate(${ml},${mt})`);
 
-  // *** BLACK HAT TECHNIQUE #1: x-axis starts at 5, NOT 0
+  // *** BLACK HAT TECHNIQUE #1: x-axis starts above 0, NOT 0 — here 5 000 kg, not zero
   // For bar charts this is especially deceptive — bars must start from 0 by convention
-  const xMin = 5;
-  const xSc = d3.scaleLinear().domain([xMin, 18.5]).range([0, w]);
+  const xMin = 5000;
+  const xSc = d3.scaleLinear().domain([xMin, 18500]).range([0, w]);
 
   const ySc = d3.scaleBand()
     .domain(rows.map(d => d.name))
@@ -294,7 +301,7 @@ function hideTip() { tip.style.opacity = 0; }
 
   // X axis at bottom (extra tick padding keeps numeric labels clear of the legend row)
   g.append("g").attr("transform",`translate(0,${h})`)
-    .call(d3.axisBottom(xSc).ticks(6).tickPadding(10))
+    .call(d3.axisBottom(xSc).ticks(6).tickPadding(10).tickFormat(fmtKgAxis))
     .call(gg=>gg.select(".domain").style("stroke","#bbb"))
     .call(gg=>gg.selectAll("text").style("font-size","11px"));
 
@@ -308,7 +315,7 @@ function hideTip() { tip.style.opacity = 0; }
   g.append("text").attr("x",w/2).attr("y",h+68)
     .attr("text-anchor","middle")
     .style("font-size","11px").style("fill","#555")
-    .text("Tonnes CO₂-equivalent per person");
+    .text("kg CO₂-equivalent per person");
 
   // Draw paired bars for each country
   rows.forEach(d => {
@@ -323,7 +330,7 @@ function hideTip() { tip.style.opacity = 0; }
       .attr("fill","#5a82a6").attr("opacity",0.72)
       .style("cursor","pointer")
       .on("mouseover",(evt)=>showTip(evt,
-        `<strong>${d.name} (2019)</strong><br>${d.v19.toFixed(2)} t CO₂e/person<br><em>(pre-pandemic)</em>`))
+        `<strong>${d.name} (2019)</strong><br>${fmtKg(d.v19)} kg CO₂e/person<br><em>(pre-pandemic)</em>`))
       .on("mousemove",moveTip).on("mouseout",hideTip);
 
     // 2023 bar (forest green)
@@ -335,18 +342,18 @@ function hideTip() { tip.style.opacity = 0; }
       .attr("fill","#1e7a31").attr("opacity",0.88)
       .style("cursor","pointer")
       .on("mouseover",(evt)=>showTip(evt,
-        `<strong>${d.name} (2023)</strong><br>${d.v23.toFixed(2)} t CO₂e/person`))
+        `<strong>${d.name} (2023)</strong><br>${fmtKg(d.v23)} kg CO₂e/person`))
       .on("mousemove",moveTip).on("mouseout",hideTip);
 
     // Value labels at bar ends
     g.append("text")
       .attr("x", xSc(d.v19)+3).attr("y", yBase+yInner("2019")+yInner.bandwidth()/2)
       .attr("dy","0.35em").style("font-size","10px").style("fill","#4a6a88")
-      .text(d.v19.toFixed(1));
+      .text(fmtKgAxis(d.v19));
     g.append("text")
       .attr("x", xSc(d.v23)+3).attr("y", yBase+yInner("2023")+yInner.bandwidth()/2)
       .attr("dy","0.35em").style("font-size","10px").style("fill","#155225")
-      .text(d.v23.toFixed(1));
+      .text(fmtKgAxis(d.v23));
 
     // *** BLACK HAT TECHNIQUE #3: reduction "badges" — accurate % but visual bars exaggerate them
     // Serves as a false authority anchor; readers trust the number but perceive the bar as even bigger

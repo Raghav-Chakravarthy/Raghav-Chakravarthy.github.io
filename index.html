@@ -22,7 +22,8 @@
     <p>
       This dataset from the <strong>Organisation for Economic Co-operation and Development (OECD)</strong>
       reports annual per-capita greenhouse gas (GHG) emissions, expressed in
-      <strong>tonnes of CO<sub>2</sub>-equivalent per person</strong>, for 95 countries from 2014 to 2023.
+      <strong>kilograms of CO<sub>2</sub>-equivalent per person</strong> (OECD SDMX: observation value × 10<sup>3</sup>
+      for the published <code>KG_CO2E_PS</code> series), for 95 countries from 2014 to 2023.
       Emissions exclude Land Use, Land-Use Change, and Forestry (LULUCF).
       All major greenhouse gases (CO<sub>2</sub>, CH<sub>4</sub>, N<sub>2</sub>O, fluorinated gases) are included
       and standardized to CO<sub>2</sub>-equivalent using Global Warming Potentials (GWP).
@@ -67,8 +68,8 @@
         <em>cumulative per-capita emissions</em>, the sum of each country's annual values across the
         decade (2014–2023). This aggregate reveals the total atmospheric burden each country's residents
         have contributed per person over ten years, a quantity not visible from a trend line alone.
-        Australia's cumulative total (~217 tonnes CO<sub>2</sub>e/person) is more than four times Sweden's
-        (~49 tonnes), even though both show modest year-on-year declines.
+        Australia's cumulative total (~217,000 kg CO<sub>2</sub>e per person over the decade) is more than four times Sweden's
+        (~49,000 kg), even though both show modest year-on-year declines.
       </p>
       <p>
         <strong>Marks &amp; encodings.</strong>
@@ -106,11 +107,11 @@
       <h3>Deceptive Techniques (Exposed)</h3>
       <p>
         <strong>Technique 1: Truncated x-axis on a bar chart (marks &amp; encodings).</strong>
-        The horizontal axis begins at 5 instead of zero. Unlike a line chart where truncation distorts
+        The horizontal axis begins at 5,000 kg instead of zero. Unlike a line chart where truncation distorts
         slopes, truncating the baseline of a bar chart violates a foundational convention: bars are
-        understood to encode value as length from zero. Here, Denmark's 2019 bar (7.87 t) is visually
-        ~2.2× longer than its 2023 bar (6.56 t), but the true ratio is only 1.2×. Luxembourg's bars
-        look like an 85% reduction visually, when the actual reduction is 33%. Because readers rarely
+        understood to encode value as length from zero. Here, Denmark's 2019 bar (7,871 kg) is visually
+        ~2.2× longer than its 2023 bar (6,558 kg), but the true ratio is only 1.2×. Luxembourg's bars
+        look like an 85% drop in bar length visually, when the actual reduction is 33%. Because readers rarely
         check whether bar charts start at zero, this technique is particularly effective and common
         in poorly-reviewed infographics and press releases.
       </p>
@@ -119,7 +120,7 @@
         The chart shows only the 2019 and 2023 values, silently skipping all intermediate years.
         This hides the fact that the steepest drop occurred in 2020, a year when economies
         contracted sharply due to COVID-19 lockdowns, not climate policy. Estonia's 2022 value
-        (10.48 t) was actually higher than its 2019 value; showing only the endpoints conceals this
+        (10,480 kg) was actually higher than its 2019 value; showing only the endpoints conceals this
         reversal entirely. Furthermore, only the six European nations with the largest reductions
         since 2019 were selected; countries that stagnated or increased (e.g., Russia +2.4%,
         Turkey +13%) are omitted with no disclosure, making the cherry-picked sample appear
@@ -135,7 +136,7 @@
         The subtitle ("all nations met or exceeded the 15% pre-pandemic reduction target") implies
         an official threshold exists; no such uniform international target is defined for these
         specific countries, and the framing omits that even after these reductions,
-        Luxembourg (11.7 t) still emits nearly three times Sweden's entire per-capita footprint (4.2 t).
+        Luxembourg (~11,700 kg per person in 2023) still emits nearly three times Sweden's entire per-capita footprint (~4,200 kg).
       </p>
     </div>
   </div><!-- end black-section -->
